@@ -32,12 +32,12 @@ class TestWidget extends StatelessWidget {
                   SizedBox(
                       height: 50,
                       width: 300,
-                      child: _debug(Text(list[index]['name']))
+                      child: Text(list[index]['name'])
                   ),
-                  _debug(Column(
+                  Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: _children(list[index]['posts'])
-                  ), color: Colors.blue)
+                  )
               ]
           );
         }
@@ -51,10 +51,10 @@ class TestWidget extends StatelessWidget {
 
   Widget _subItem(e) => SizedBox(
       height: 50,
-      child: _debug(Align(
+      child: Align(
           alignment: Alignment.topLeft,
           child: Text("${e['title']} - ${e['content']}", textAlign: TextAlign.left)
-      ), color: Colors.green)
+      )
   );
 
   Widget _debug(Widget child, {Color color = Colors.red}) {
