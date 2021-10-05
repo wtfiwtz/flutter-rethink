@@ -11,18 +11,59 @@ class TestWidget extends StatelessWidget {
     return StreamBuilder(
         stream: fabric.stream("authors"),
         builder: (context, AsyncSnapshot snapshot) {
-          print(snapshot.data);
-          if (snapshot.data is AddOp) {
-            var addOp = snapshot.data as AddOp;
-            List list = addOp.parsedData;
-            print("addOp $list");
-            return Text(list.toString());
+          if (snapshot.data is! AddOp) {
+            return const Text('(unknown message type)');
           }
-          // print(snapshot);
-          return const Text('(unknown message type)');
-        });
+          var addOp = snapshot.data as AddOp;
+          List list = addOp.parsedData;
 
-    // return const Text('Test Widget goes here');
+          return _listView(list);
+        });
+  }
+
+  Widget _listView(List list) {
+    return ListView.builder(
+        shrinkWrap: true,
+        padding: const EdgeInsets.all(8),
+        itemCount: list.length,
+        itemBuilder: (BuildContext context, int index) {
+          return Row(
+              children: [
+                  SizedBox(
+                      height: 50,
+                      width: 300,
+                      child: _debug(Text(list[index]['name']))
+                  ),
+                  _debug(Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: _children(list[index]['posts'])
+                  ), color: Colors.blue)
+              ]
+          );
+        }
+    );
+  }
+
+  List<Widget> _children(List list) {
+    print("Item: ${list[0]}");
+    return list.map((e) => _subItem(e)).toList();
+  }
+
+  Widget _subItem(e) => SizedBox(
+      height: 50,
+      child: _debug(Align(
+          alignment: Alignment.topLeft,
+          child: Text("${e['title']} - ${e['content']}", textAlign: TextAlign.left)
+      ), color: Colors.green)
+  );
+
+  Widget _debug(Widget child, {Color color = Colors.red}) {
+    return Container(
+        decoration: BoxDecoration(border: Border.all(color: color, width: 2)),
+        child: Align(
+            alignment: Alignment.topLeft,
+            child: child)
+    );
   }
 }
 
