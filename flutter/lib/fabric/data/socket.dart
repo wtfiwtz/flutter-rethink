@@ -44,6 +44,9 @@ class Socket {
       int responseLen = byteData.getUint32(4, Endian.little);
       ByteData byteData2 = ByteData.sublistView(list, 8, 8 + responseLen);
       String asString = getStringFromBytes(byteData2);
+
+      print("New value: $asString");
+
       onData(AddOp(requestId, asString));
 
     }, onError: onError);

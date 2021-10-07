@@ -19,6 +19,11 @@ class AddOp extends Operation {
 
   dynamic parse() {
     parsedData = jsonDecode(data);
+
+    // TODO: Fix non-list
+    if (parsedData is! List) {
+      parsedData = [parsedData];
+    }
     return parsedData;
   }
 }

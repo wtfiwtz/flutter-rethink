@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/binary"
 	"encoding/json"
 	"flag"
@@ -38,11 +39,12 @@ func rethinkDb() *r.Session {
 	return session
 }
 
-func createResponse(session *r.Session, request []byte) []byte {
+func createResponse(session *r.Session, request []byte, messageType int, conn *websocket.Conn) []byte {
 	var buffer []byte
 	messageKind := binary.LittleEndian.Uint32(request[0:])
 	if messageKind == kOperationListen {
-		requestId, response := listenRequest(session, request)
+		ctx := context.Background()
+		requestId, response := listenRequest(session, request, &ctx, messageType, conn)
 		buffer = writeAddObject(requestId, response)
 
 	} else {
@@ -57,7 +59,7 @@ func createResponse(session *r.Session, request []byte) []byte {
 //	Name string `gorethink:"name"`
 //}
 
-func listenRequest(session *r.Session, request []byte) (uint32,[]byte) {
+func listenRequest(session *r.Session, request []byte, ctx *context.Context, messageType int, conn *websocket.Conn) (uint32,[]byte) {
 	requestId := binary.LittleEndian.Uint32(request[4:])
 	messagePathSize := binary.LittleEndian.Uint32(request[8:])
 	path := request[12: (12 + messagePathSize)]
@@ -79,12 +81,57 @@ func listenRequest(session *r.Session, request []byte) (uint32,[]byte) {
 
 	// fmt.Println(authors)
 
-	json, err := json.Marshal(results)
+	json1, err := json.Marshal(results)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	return requestId, json
+	if ctx != nil {
+		handleChanges(session, path, ctx, messageType, requestId, conn);
+		// defer res.Close()
+	}
+
+	return requestId, json1
+}
+
+func handleChanges(session *r.Session, path []byte, ctx *context.Context, messageType int, requestId uint32, conn *websocket.Conn) {
+	fmt.Println("Handle Changes")
+	cursor, err := r.DB("test").Table(string(path)).Changes().Run(session)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// Shutdown the cursor to close when notified
+	go func(ctx context.Context) {
+		<-ctx.Done()
+		fmt.Println("Received done")
+		cursor.Close()
+	}(*ctx)
+
+	go func() {
+		var changeFeed map[string]interface{}
+		for cursor.Next(&changeFeed) {
+			fmt.Println("Change", changeFeed)
+
+			//if changeFeed["old_val"] != nil {
+			//	//do something
+			//}
+			//
+
+			if changeFeed["new_val"] != nil {
+				json2, err := json.Marshal(changeFeed["new_val"])
+				if err != nil {
+					log.Fatalln(err)
+				}
+
+				buffer := writeAddObject(requestId, json2)
+				if err := conn.WriteMessage(messageType, buffer); err != nil {
+					log.Println(err)
+					return
+				}
+			}
+		}
+	}()
 }
 
 func writeAddObject(requestId uint32, responseData []byte) []byte {
@@ -128,7 +175,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		// fmt.Println("Got a message: ", messageType, " with size ", len(request));
 
 		// formulate a response
-		buffer := createResponse(gRethinkSession, request)
+		buffer := createResponse(gRethinkSession, request, messageType, conn)
 		// fmt.Println("Response: ", buffer[0], "; ", buffer);
 
 		if err := conn.WriteMessage(messageType, buffer); err != nil {

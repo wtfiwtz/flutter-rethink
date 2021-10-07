@@ -46,6 +46,18 @@ r.table('authors').insert([
 
 
 
+r.table('authors').insert([
+    { name: "aaa", tv_show: "bbb",
+      posts: [
+        {title: "ccc", content: "The Cylon War is long over..."}
+      ]
+    }
+]).run(connection, function(err, result) {
+    if (err) throw err;
+    console.log(JSON.stringify(result, null, 2));
+})
+
+
 
 
 r.table('authors').run(connection, function(err, cursor) {
