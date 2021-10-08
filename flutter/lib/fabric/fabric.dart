@@ -43,7 +43,7 @@ Stream stream(String table) {
 handleResponse(StreamController controller, Operation msg) {
   if (msg.kind == Operation.kAdd) {
     var addOp = msg as AddOp;
-    var map = addOp.parse();
+    var map = addOp.parsedData; // .parse();
     print("Message response is: $map");
 
     // Add the response to the stream for any listeners

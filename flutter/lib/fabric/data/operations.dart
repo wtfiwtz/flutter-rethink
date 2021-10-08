@@ -15,15 +15,16 @@ class AddOp extends Operation {
   String data;
   dynamic parsedData;
 
-  AddOp(this.requestId, this.data): super(Operation.kAdd);
+  AddOp(this.requestId, this.parsedData): data = '', super(Operation.kAdd);
 
-  dynamic parse() {
-    parsedData = jsonDecode(data);
-
-    // TODO: Fix non-list
-    if (parsedData is! List) {
-      parsedData = [parsedData];
-    }
-    return parsedData;
-  }
+  // dynamic parse() {
+  //   parsedData = jsonDecode(data);
+  //
+  //   // TODO: Fix non-list
+  //   // if (parsedData is! List) {
+  //   //   parsedData = [parsedData];
+  //   // }
+  //
+  //   return parsedData;
+  // }
 }

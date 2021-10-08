@@ -1,6 +1,6 @@
 r = require('rethinkdb');
 
-
+// https://rethinkdb.com/docs/guide/javascript/
 
 var connection = null;
 r.connect( {host: 'localhost', port: 28015}, function(err, conn) {

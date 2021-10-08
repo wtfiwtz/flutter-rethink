@@ -27,6 +27,7 @@ class TestWidget extends StatelessWidget {
         padding: const EdgeInsets.all(8),
         itemCount: list.length,
         itemBuilder: (BuildContext context, int index) {
+          // print("List item: ${list[index]}");
           return Row(
               children: [
                   SizedBox(
@@ -45,7 +46,7 @@ class TestWidget extends StatelessWidget {
   }
 
   List<Widget> _children(List list) {
-    print("Item: ${list[0]}");
+    // print("Item: ${list[0]}");
     return list.map((e) => _subItem(e)).toList();
   }
 

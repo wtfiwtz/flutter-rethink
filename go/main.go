@@ -118,8 +118,10 @@ func handleChanges(session *r.Session, path []byte, ctx *context.Context, messag
 			//}
 			//
 
-			if changeFeed["new_val"] != nil {
-				json2, err := json.Marshal(changeFeed["new_val"])
+			if changeFeed["old_val"] == nil && changeFeed["new_val"] != nil {
+				var mapChangeFeed = changeFeed["new_val"].(map[string]interface{})
+				var wrap = [1]map[string]interface{}{mapChangeFeed}
+				json2, err := json.Marshal(wrap)
 				if err != nil {
 					log.Fatalln(err)
 				}

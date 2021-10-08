@@ -1,6 +1,7 @@
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:p2pflutter/fabric/data/sync_engine.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'operations.dart';
@@ -11,13 +12,14 @@ class Socket {
   static const int uint32MaxValue = 0xFFFFFFFF;
 
   late WebSocketChannel channel;
+  SyncEngine syncEngine;
   HashMap<String,List<Function>> listenerMap;
   HashMap<int,String> requestMap;
   int requestId;
 
 
   Socket(String target)
-      : listenerMap = HashMap(), requestMap = HashMap(), requestId = 1
+      : listenerMap = HashMap(), requestMap = HashMap(), syncEngine = SyncEngine(), requestId = 1
   {
     channel = WebSocketChannel.connect(Uri.parse(target));
   }
@@ -35,6 +37,8 @@ class Socket {
 
     _addToListenerMap(path, onData);
 
+    var cache = syncEngine.buildCache(path);
+
     channel.stream.listen((msg) {
 
       Uint8List list = msg;
@@ -45,9 +49,18 @@ class Socket {
       ByteData byteData2 = ByteData.sublistView(list, 8, 8 + responseLen);
       String asString = getStringFromBytes(byteData2);
 
-      print("New value: $asString");
+      var objs = jsonDecode(asString);
+      if (objs is List) {
+        (objs as List).forEach((obj) {
+          syncEngine.addToCache(cache, obj);
+          print("New value: $obj");
+        });
+      } else {
+        syncEngine.addToCache(cache, objs);
+        print("New value (1): $objs");
+      }
 
-      onData(AddOp(requestId, asString));
+      onData(AddOp(requestId, List.of(cache.values)));
 
     }, onError: onError);
   }
